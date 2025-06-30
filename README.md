@@ -60,6 +60,22 @@ And to fetch required code for all zephyr targets run:
 make update
 ```
 
+#### For Fedora
+
+Build the LinkServer docker image. The image is needed to run LinkServer as
+there are no binaries for Fedora.
+
+```bash
+cd lpcbuilder; docker build -t lpcbuilderimage:latest .; cd -
+```
+
+Install `tio 3.8` (must be this exact version). Executing following scripts will
+download the sources, compile them locally and install `tio`.
+
+```bash
+scripts/install_tio.sh
+```
+
 ### Enrolling
 
 The PUF implementation for the LPCxpresso55S69 requires two non-secret values to
