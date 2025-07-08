@@ -5,17 +5,13 @@ REQUIRED_TIO_VERSION="3.8"
 TIO_SOURCE_URL="https://github.com/tio/tio/releases/download/v3.8/tio-3.8.tar.xz"
 
 function check_os_fedora() {
-    if [[ -f /etc/fedora-release ]]; then
-        return 0
-    else
-        return 1
-    fi
+    [[ -f /etc/fedora-release ]] && echo "fedora" || echo ""
 }
 
 function tio_version() {
     if ! command -v tio &>/dev/null; then
         echo ""
-        return 1
+        return
     fi
     # Extract version string e.g. "tio v3.8" or "tio v3.9"
     local ver
@@ -58,7 +54,7 @@ if [[ "$current_version" == "$REQUIRED_TIO_VERSION" ]]; then
     exit 0
 fi
 
-if ! check_os_fedora; then
+if [[ "$(check_os_fedora)" != "fedora" ]]; then
     echo "This script only handles Fedora for installation."
     if [[ -z "$current_version" ]]; then
         echo "tio $REQUIRED_TIO_VERSION is not installed. Exiting."

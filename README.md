@@ -51,7 +51,7 @@ As of now the demo fails to start on `A3` revision of `LPC55s69`, more details
 about the issue
 [here](https://github.com/crosscon/UC1.1-Manifest/issues/2#issuecomment-3027862206).
 
-A workaround is to checkout to '0.2.1` revision which does not include
+A workaround is to checkout to `0.2.1` revision which does not include
 hypervisor autostart fix, thus it is still possible to kickstart it via `gdb`.
 
 ```bash
