@@ -15,20 +15,6 @@ look at [crosscon/ZK-PUF-Zephyr-Demo](https://github.com/crosscon/ZK-PUF-Zephyr-
 - `lua`
 - (optional) `tio` **v3.8**
 
-
-## All-in-one
-
-To install dependencies, build everything, and flash the image to the board in
-one command:
-
-> Important: Ensure the LPCxpresso55S69 board is connected via the P6 Debug Link
-  port before running this command, as both enrollment and flashing steps
-  require an active connection.
-
-```sh
-make all
-```
-
 ## Building
 
 ### Prerequisites
@@ -62,6 +48,65 @@ And to fetch required code for all zephyr targets run:
 ```sh
 make update
 ```
+
+#### Workaround for A3 Revision of LPC55S69
+As of now the demo fails to start on `A3` revision of `LPC55s69`, more details
+about the issue
+[here](https://github.com/crosscon/UC1.1-Manifest/issues/2#issuecomment-3027862206).
+
+A workaround is to checkout to `0.2.1` revision which does not include
+hypervisor autostart fix, thus it is still possible to kickstart it via `gdb`.
+
+```bash
+sudo rm -rf build/ # to ensure clean build
+git checkout 0.2.1
+git submodule update --init --recursive
+git cherry-pick 3c57f078fa11d7fda8870bab5f982973deaa9379 # Ensure stuff for building on fedora is added
+```
+
+#### For Fedora
+
+Build the LinkServer docker image. The image is needed to run LinkServer as
+there are no binaries for Fedora.
+
+```bash
+cd lpcbuilder; docker build -t lpcbuilderimage:latest .; cd -
+```
+
+Install `tio 3.8` (must be this exact version). Executing following scripts will
+download the sources, compile them locally and install `tio`.
+
+```bash
+scripts/install_tio.sh
+```
+
+### All-in-one
+
+To install dependencies, build everything, and flash the image to the board in
+one command:
+
+> Important: Ensure the LPCxpresso55S69 board is connected via the P6 Debug Link
+  port before running this command, as both enrollment and flashing steps
+  require an active connection.
+
+```sh
+make all
+```
+
+This shall do all necessary steps required to build and run the demo. Note that
+user will be prompted to reset the platform manually and if UART is opened
+elsewhere, paste the output manually.
+
+#### Workaround: kickstart the hypervisor
+Due to the issue described [above](#workaround-for-a3-revision-of-lpc55s69), the
+hypervisor must be kickstarted via gdb. Run the following command after
+everything has been built and flashed
+
+```bash
+lpcbuilder/run.sh bash -c 'scripts/gdb_start.sh'
+```
+
+This will run `gdb` in a docker as LinkServer is required.
 
 ### Enrolling
 

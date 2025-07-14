@@ -23,6 +23,19 @@ HV_MAKE_FLAGS := build_dir=$(current_directory)/build/Hypervisor/build/$(HV_PLAT
 
 .PHONY: all update clean build-% flash flash-% install-deps install-deps-% global-deps
 
+# Run linkserver under Docker on Fedora
+
+LINKSERVER = ./lpcbuilder/run.sh LinkServer
+
+# Run arm-none-eabi-* under Docker on Fedora
+
+ARM-NONE-EABI-OBJDUMP = ./lpcbuilder/run.sh arm-none-eabi-objdump
+ARM-NONE-EABI-OBJCOPY = ./lpcbuilder/run.sh arm-none-eabi-objcopy
+
+# Run make under Docker on Fedora
+
+LPCBUILDER = ./lpcbuilder/run.sh bash -c
+
 #------------------------------------------------------------
 # Python venv logic for installing west and python dependencies
 #------------------------------------------------------------
@@ -113,7 +126,8 @@ build-ENROLLMENT_APP:
 flash-ENROLLMENT_APP:
 	@echo
 	@echo ">>> Flashing Enrollment App <<<"
-	@LinkServer flash LPC55S69:LPCXpresso55S69 load $(current_directory)/build/ENROLLMENT_APP/zephyr/zephyr.elf
+	@$(LINKSERVER) flash LPC55S69:LPCXpresso55S69 load $(current_directory)/build/ENROLLMENT_APP/zephyr/zephyr.elf
+	@@echo ">>> Flashing Done! <<<"
 
 get_enrollment_data:
 	@{ \
@@ -202,20 +216,20 @@ substitute_enrollment_data:
 	if $$proceed; then \
 		echo; \
 		echo ">>> Pre-patch <<<"; \
-		arm-none-eabi-objdump -s -j .activation_code $(current_directory)/build/PUF_VM/zephyr/zephyr.elf; \
-		arm-none-eabi-objcopy -v --update-section .activation_code=$(current_directory)/build/enrollment_data/activation_code.bin \
+		$(ARM-NONE-EABI-OBJDUMP) -s -j .activation_code $(current_directory)/build/PUF_VM/zephyr/zephyr.elf; \
+		$(ARM-NONE-EABI-OBJCOPY) -v --update-section .activation_code=$(current_directory)/build/enrollment_data/activation_code.bin \
 			$(current_directory)/build/PUF_VM/zephyr/zephyr.elf; \
 		echo; \
 		echo ">>> Post-patch <<<"; \
-		arm-none-eabi-objdump -s -j .activation_code $(current_directory)/build/PUF_VM/zephyr/zephyr.elf; \
+		$(ARM-NONE-EABI-OBJDUMP) -s -j .activation_code $(current_directory)/build/PUF_VM/zephyr/zephyr.elf; \
 		echo; \
 		echo ">>> Pre-patch <<<"; \
-		arm-none-eabi-objdump -s -j .key_code $(current_directory)/build/PUF_VM/zephyr/zephyr.elf; \
-		arm-none-eabi-objcopy -v --update-section .key_code=$(current_directory)/build/enrollment_data/intrinsic_key.bin \
+		$(ARM-NONE-EABI-OBJDUMP) -s -j .key_code $(current_directory)/build/PUF_VM/zephyr/zephyr.elf; \
+		$(ARM-NONE-EABI-OBJCOPY) -v --update-section .key_code=$(current_directory)/build/enrollment_data/intrinsic_key.bin \
 			$(current_directory)/build/PUF_VM/zephyr/zephyr.elf; \
 		echo; \
 		echo ">>> Post-patch <<<"; \
-		arm-none-eabi-objdump -s -j .key_code $(current_directory)/build/PUF_VM/zephyr/zephyr.elf; \
+		$(ARM-NONE-EABI-OBJDUMP) -s -j .key_code $(current_directory)/build/PUF_VM/zephyr/zephyr.elf; \
 	else \
 		echo; \
 		echo ">>> Skipping patching steps <<<"; \
@@ -226,7 +240,7 @@ build-Hypervisor:
 	@echo ">>> Building Hypervisor <<<"
 	@mkdir -p build/Hypervisor/build
 	@mkdir -p build/Hypervisor/bin
-	$(MAKE) $(HV_MAKE_FLAGS) -C Hypervisor
+	@$(LPCBUILDER) 'make $(HV_MAKE_FLAGS) -C Hypervisor'
 
 build-%:
 	@echo
@@ -241,12 +255,14 @@ build-%:
 flash-Hypervisor:
 	@echo
 	@echo ">>> Flashing Hypervisor <<<"
-	@LinkServer flash LPC55S69:LPCXpresso55S69 load $(current_directory)/build/Hypervisor/bin/$(HV_PLATFORM)/$(HV_CONFIG)/crossconhyp.elf
+	@$(LINKSERVER) flash LPC55S69:LPCXpresso55S69 load $(current_directory)/build/Hypervisor/bin/$(HV_PLATFORM)/$(HV_CONFIG)/crossconhyp.elf
+	@@echo ">>> Flashing Done! <<<"
 
 flash-%:
 	@echo
 	@echo ">>> Flashing Zephyr VM: $* <<<"
-	@LinkServer flash LPC55S69:LPCXpresso55S69 load $(current_directory)/build/$*/zephyr/zephyr.elf
+	@$(LINKSERVER) flash LPC55S69:LPCXpresso55S69 load $(current_directory)/build/$*/zephyr/zephyr.elf
+	@@echo ">>> Flashing Done! <<<"
 
 #------------------------------------------------------------
 # Clean
